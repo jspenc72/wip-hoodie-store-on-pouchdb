@@ -1,7 +1,25 @@
-Hoodie Store meets PouchDB
-==========================
+Hoodie, meet PouchDB
+====================
 
-> Hoodie is going PouchDB. This repo is meant as a place for research and discussion
+Up until now, Hoodie uses a custom solution on top of localStorage for data persistence and offline sync. But we can do better. [PouchDB](http://pouchdb.com/) is a database for browsers. And it syncs. Plus, it has one of the friendliest and most dedicated community behind it. A match made in heaven.
+
+
+## The Plan™
+
+We will create an isolated module that implements the `hoodie.store` API. Once finished, we will replace our self-cooked localStorage solution with it, but that’s another plan™
+
+- [x] Create hoodie.store dream api
+- [ ] Create test setup with multi couch
+- [ ] _wip_ write tests for sync methods
+- [ ] _wip_ Implement sync methods
+- [ ] _wip_ write tests for store methods
+- [ ] _wip_ Implement store methods
+- [ ] Implement events
+- [ ] Implement `.hasLocalChanges()` & `.changedObjects()`
+- [ ] Implement custom store
+
+And along the way, we create [PouchDB plugins](http://pouchdb.com/api.html#plugins) whenever feasible.
+
 
 ## Dream API
 
@@ -9,7 +27,7 @@ The API is a merge of Hoodie's current `hoodie.store`
 and `hoodie.remote` API.
 
 ```js
-// all methods return promises
+// all methods return native promises
 hoodie.store.add(object)
 hoodie.store.add([object1, object2])
 hoodie.store.find(id)
@@ -28,18 +46,22 @@ hoodie.store.updateOrAdd([object1, object2])
 hoodie.store.updateAll(changedProperties)
 hoodie.store.updateAll(updateFunction)
 hoodie.store.remove(id)
+hoodie.store.remove(object)
 hoodie.store.removeAll()
+hoodie.store.removeAll(filterFunction)
 hoodie.store.clear()
 
-// sync with remote store
-hoodie.store.pull()
-hoodie.store.push(/*objects*/)
-hoodie.store.sync(/*objects*/)
-hoodie.store.disconnect()
+// sync methods, return native promises
+hoodie.store.pull() // pulls changes one-time
+hoodie.store.push() // pushes changes one-time
+hoodie.store.sync() // pulls and pushes changes one-time
+hoodie.store.connect() // starts continuous replication
+hoodie.store.disconnect() // stops continuous replication and all pending requests
+
 
 // returns true or false
 hoodie.store.hasLocalChanges()
-// returns all objects witch changes that have not been synced yet.
+// returns all objects witch local changes that have not been synced yet.
 hoodie.store.changedObjects()
 
 // events
@@ -50,7 +72,8 @@ hoodie.store.off(event /*, handler */)
 hoodie.store(typeOrOptions)
 ```
 
-### List of events
+
+## Events
 
 - *change* -> eventName, object, options
   _eventName_: add || update || remove
@@ -73,23 +96,8 @@ hoodie.store(typeOrOptions)
 - *clear*
   All objects got removed at once
 
-Besides `clear`, all events get also triggered
-with "type:" and "type:id:" namespaces. So when
-an object gets removed which had these properties:
-`{type: 'todo', id: '123', name: 'Do this!'}`,
-6 events are triggered in total.
 
-1. `change`
-2. `todo:change`
-3. `todo:123:change`
-1. `remove`
-2. `todo:remove`
-3. `todo:123:remove`
-
-If an object has no `type` property, no namespaced
-events are triggered.
-
-### Custom store
+## Custom stores
 
 ```js
 // example
@@ -110,73 +118,26 @@ store a new object with the properties:
 The `renderList` callback would only be called if objects
 with `type: 'todo'` are changed.
 
-### Internal properties
 
-We store timestamps and the user's `hoodie.id()` with every
-change:
+## Differences to current hoodie.store API / out of scope
 
-- `createdAt`: "2014-10-25T10:00:00+02:00" (ideally with timezone offset)
-- `updatedAt`: "2014-10-25T10:00:00+02:00"
-- `createdBy`: "uuid123"
+- `type` is no longer a required parameter and it’s no longer part    of the _id properties in CouchDB.
+- returned Promises only expose `.then` and `.catch`. We will add the jQuery-esque callbacks later.
+- no more namespaces events a la `type:change` on `hoodie.store`. Instead, create a scoped store using `hoodie.store(‘type’).on(‘change’)`
+- we don’t create Hoodie’s special properties for now (`createdAt`, `updatedAt`, `createdBy`)
 
 
-## Implementation plan
+## Internals
 
-The plan is to build the new PouchDB powered `hoodie.store` module
-isolated from the current Hoodie codebase.
+`hoodie.store` creates a local PouchDB with the name “hoodie-store”. The remote database is called “user/hoodieid” (`<hoodieid>` will later be replaced with the random hoodie.id()). The first time one of the sync methods is called and it fails, `hoodie.store` tries to create the database and then do the sync method, and only if that fails, the returned promise gets rejected.
 
-### Setup
 
-- As there is no `hoodie.id()`, we hardcoded it to "hoodieid"
-- As there is no Remote store or CouchDB, use the system CouchDB
-  and create a new database "user/hoodieid", then hard code the
-  remote location to http://localhost:5984/user%2fhoodieid
+## Test setup
 
-### Step 1 ✔
-
-Implement start/stop sync methods
-
-```js
-hoodie.store.connect()
-hoodie.store.disconnect()
 ```
-
-### Step 2 ✔
-
-Implement the basic store methods
-
-```js
-hoodie.store.add(properties)
-hoodie.store.find(id)
-hoodie.store.find(object)
-hoodie.store.findOrAdd(id, properties)
-hoodie.store.findAll()
-hoodie.store.update(id, changedProperties)
-hoodie.store.updateOrAdd(id, properties)
-hoodie.store.updateAll(changedProperties)
-hoodie.store.remove(id)
-hoodie.store.remove(object)
-hoodie.store.removeAll()
-hoodie.store.clear()
+npm start
+# starts a local server at localhost:9000
+# It serves /index.html and all other static assets, and
+# proxies /hoodie/store to its own CouchDB in admin-party
+# mode so anonymous users can create databases.
 ```
-
-### Step 3 (wip)
-
-Create basic test setup
-
-1. start local server with own couch (compare Hoodie setup)
-2. write tests for Steps 1 & 2
-
-### Step 4
-
-Implement events
-
-### Step 5
-
-Implement `hasLocalChanges` and `changedObjects`
-
-
-
-## Questions / Ideas?
-
-https://github.com/gr2m/hoodie-store-pouchdb.js/issues/new
