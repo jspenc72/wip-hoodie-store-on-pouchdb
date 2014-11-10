@@ -67,7 +67,7 @@ hoodie.store.on(event, handler)
 hoodie.store.off(event /*, handler */)
 
 // returns a custom store
-hoodie.store(typeOrOptions)
+hoodie.store(type)
 ```
 
 
