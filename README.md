@@ -6,7 +6,7 @@ Up until now, Hoodie uses a custom solution on top of localStorage for data pers
 
 ## The Plan™
 
-We will create an isolated module that implements the `hoodie.store` API. Once finished, we will replace our self-cooked localStorage solution with it, but that’s another plan™
+We will create an isolated module that implements the `hoodie.store` API. Once finished, we will replace our self-cooked localStorage solution with it, but that will be another plan™. For now:
 
 - [x] Create hoodie.store dream api
 - [ ] Create test setup with multi couch
