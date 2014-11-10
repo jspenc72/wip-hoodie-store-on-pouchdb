@@ -140,4 +140,7 @@ npm start
 # It serves /index.html and all other static assets, and
 # proxies /hoodie/store to its own CouchDB in admin-party
 # mode so anonymous users can create databases.
+
+npm test
+# tests all the things
 ```
