@@ -10,6 +10,7 @@ We will create an isolated module that implements the `hoodie.store` API. Once f
 
 - [x] Create hoodie.store dream api
 - [ ] Create test setup with own CouchDB backend [#8](https://github.com/hoodiehq/wip-hoodie-store-on-pouchdb/issues/8)
+- [ ] Conflict Management Dream API [#32](https://github.com/hoodiehq/wip-hoodie-store-on-pouchdb/issues/32)
 - [ ] Implement sync methods [#19](https://github.com/hoodiehq/wip-hoodie-store-on-pouchdb/issues/19)
 - [ ] Implement store methods [#7](https://github.com/hoodiehq/wip-hoodie-store-on-pouchdb/issues/7)
 - [ ] Implement events [#26](https://github.com/hoodiehq/wip-hoodie-store-on-pouchdb/issues/26)
