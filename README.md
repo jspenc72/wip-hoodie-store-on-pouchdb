@@ -83,6 +83,45 @@ hoodie.store.on('sync', function(object) {})
 hoodie.store.on('clear', function() {})
 ```
 
+## Conflict management
+
+see [#32](https://github.com/hoodiehq/wip-hoodie-store-on-pouchdb/issues/32)
+for discussion on Conflict Management API.
+
+```js
+// all objects returned by all hoodie.store methods and passed
+// to all events (change, add, update, remove) have a _conflicts property.
+
+// To find all objects having a conflict, use hoodie.store.findAll with a filter function
+hoodie.store.findAll(function(object) {
+  return object._conflicts !== undefined;
+})
+.then(function(objectsWithConflicts) {
+  objectsWithConflicts.forEach(function(object) {
+    object._conflicts // array of conflicting versions
+  })
+})
+
+// To resolve a conflict, the hoodie.store update methods accept a `removeConflicts` option.
+hoodie.store.update(winningObjectVersion, {removeConflicts: true})
+.then(function(newObjectVersion) {
+  newObjectVersion._conflicts // undefined
+});
+
+// It can also be an array of the conflicting rev IDs or entire object
+hoodie.store.update(object, {removeConflicts: [loosingVersion1, loosingVersion2]})
+
+// Removing an object always automatically removes all conflicting revisions
+hoodie.store.remove(object)
+
+// You can listen to conflicts happening in the background
+hoodie.store.on('change', function(object) {
+  if (object._conflicts) {
+    // update UI and/or handle conflict
+  }
+})
+```
+
 
 ## Custom stores
 
